@@ -1,7 +1,9 @@
 ﻿using System.CommandLine;
 using System.Text;
 
-internal class Program
+namespace Chars;
+
+public class Program
 {
 	[Flags]
 	private enum StringOptions
@@ -24,12 +26,39 @@ internal class Program
 		rootCommand.AddOption(specialCharsOption);
 		rootCommand.AddOption(numbersOption);
 
-		rootCommand.SetHandler(HandleCommand, lengthArgument, specialCharsOption, numbersOption);
+		rootCommand.SetHandler(HandleInput, lengthArgument, specialCharsOption, numbersOption);
 
 		return rootCommand.Invoke(args);
 	}
 
-	private static void HandleCommand(int length, bool noSpecialChars, bool noNumbers)
+	private static void HandleInput(int length, bool noSpecialChars, bool noNumbers)
+	{
+		// check the length provided in CLI
+		if (length < 0)
+		{
+			Console.Error.WriteLine("Length cannot be negative");
+			Environment.Exit(1);
+		}
+
+		var charset = GetCharset(noSpecialChars, noNumbers);
+		Console.WriteLine(GetString(length, charset));
+	}
+
+	public static string GetString(int length, int[] charset)
+	{
+		StringBuilder stringBuilder = new(length);
+		Random random = new();
+
+		for (var i = 0; i < length; i++)
+		{
+			var index = random.Next(charset.Length);
+			stringBuilder.Append((char)charset[index]);
+		}
+
+		return stringBuilder.ToString();
+	}
+
+	public static int[] GetCharset(bool noSpecialChars, bool noNumbers)
 	{
 		// by default both uppercase and lowercase letters are used, however a distinction is used for future development
 		var charsetOption = StringOptions.LowercaseLetters | StringOptions.UppercaseLetters |
@@ -44,7 +73,7 @@ internal class Program
 		var specialCharset = Enumerable.Range(33, 47 - 33 + 1).Concat(Enumerable.Range(58, 7))
 			.Concat(Enumerable.Range(91, 6)).Concat(Enumerable.Range(123, 4));
 
-		var charset = charsetOption switch
+		return charsetOption switch
 		{
 			// letters and numbers
 			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers => 
@@ -57,28 +86,5 @@ internal class Program
 				letterCharset.Concat(numberCharset).Concat(specialCharset).ToArray(),
 			_ => letterCharset.ToArray()
 		};
-
-		// check the length provided in CLI
-		if (length < 0)
-		{
-			Console.Error.WriteLine("Length cannot be negative");
-			Environment.Exit(1);
-		}
-
-		Console.WriteLine(GetString(length, charset));
-	}
-
-	private static string GetString(int length, int[] charset)
-	{
-		StringBuilder stringBuilder = new(length);
-		Random random = new();
-
-		for (var i = 0; i < length; i++)
-		{
-			var index = random.Next(charset.Length);
-			stringBuilder.Append((char)charset[index]);
-		}
-
-		return stringBuilder.ToString();
 	}
 }
