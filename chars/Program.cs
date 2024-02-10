@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Chars;
 
-public class Program
+public static class Program
 {
 	[Flags]
 	private enum StringOptions
@@ -16,7 +16,7 @@ public class Program
 
 	public static int Main(string[] args)
 	{
-		var rootCommand = new RootCommand("An app returning a string of given length.");
+		var rootCommand = new RootCommand("An app returning a 4-bit ASCII string of given length.");
 
 		var lengthArgument = new Argument<int>("length", "Length of the string.");
 		var specialCharsOption = new Option<bool>("--no-special-chars", "Returns a string without special characters.");
@@ -49,6 +49,7 @@ public class Program
 		StringBuilder stringBuilder = new(length);
 		Random random = new();
 
+		// generate string of a given length
 		for (var i = 0; i < length; i++)
 		{
 			var index = random.Next(charset.Length);
@@ -58,7 +59,7 @@ public class Program
 		return stringBuilder.ToString();
 	}
 
-	public static int[] GetCharset(bool noSpecialChars, bool noNumbers)
+	public static int[] GetCharset(bool noSpecialChars = false, bool noNumbers = false)
 	{
 		// by default both uppercase and lowercase letters are used, however a distinction is used for future development
 		var charsetOption = StringOptions.LowercaseLetters | StringOptions.UppercaseLetters |
@@ -76,14 +77,16 @@ public class Program
 		return charsetOption switch
 		{
 			// letters and numbers
-			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers => 
+			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers =>
 				letterCharset.Concat(numberCharset).ToArray(),
 			// letters and special characters
-			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.SpecialCharacters => 
+			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.SpecialCharacters =>
 				letterCharset.Concat(specialCharset).ToArray(),
 			// letters, numbers and special characters
-			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers | StringOptions.SpecialCharacters =>
+			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers |
+				StringOptions.SpecialCharacters =>
 				letterCharset.Concat(numberCharset).Concat(specialCharset).ToArray(),
+			// letters only
 			_ => letterCharset.ToArray()
 		};
 	}
