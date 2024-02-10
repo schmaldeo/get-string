@@ -3,37 +3,14 @@ using System.Text;
 
 internal class Program
 {
-	// Initialise arrays like this for maximum performance 
-	private static readonly int[] CHARS_ASCII =
-	[
-		33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50,
-		51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68,
-		69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86,
-		87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103,
-		104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117,
-		118, 119, 120, 121, 122, 123, 124, 125, 126
-	];
-
-	private static readonly int[] CHARS_ASCII_NO_SPECIAL =
-	[
-		48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
-		84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114,
-		115, 116, 117, 118, 119, 120, 121, 122
-	];
-
-	private static readonly int[] CHARS_ASCII_NO_NUMBERS =
-	[
-		58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86,
-		87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112,
-		113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126
-	];
-
-	private static readonly int[] CHARS_ASCII_NO_NUMBERS_NO_SPECIAL =
-	[
-		65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83,
-		84, 85, 86, 87, 88, 89, 90, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114,
-		115, 116, 117, 118, 119, 120, 121, 122
-	];
+	[Flags]
+	private enum StringOptions
+	{
+		LowercaseLetters = 1,
+		UppercaseLetters = 1 << 1,
+		Numbers = 1 << 2,
+		SpecialCharacters = 1 << 3
+	} 
 
 	public static int Main(string[] args)
 	{
@@ -54,35 +31,52 @@ internal class Program
 
 	private static void HandleCommand(int length, bool noSpecialChars, bool noNumbers)
 	{
+		// by default both uppercase and lowercase letters are used, however a distinction is used for future development
+		var charsetOption = StringOptions.LowercaseLetters | StringOptions.UppercaseLetters |
+		                    (!noSpecialChars ? StringOptions.SpecialCharacters : 0) |
+		                    (!noNumbers ? StringOptions.Numbers : 0);
+
+		// create a bunch of IEnumerables containing 4 bit ASCII codes
+		var uppercaseCharset = Enumerable.Range(65, 90 - 65 + 1);
+		var lowercaseCharset = Enumerable.Range(97, 122 - 97 + 1);
+		var letterCharset = uppercaseCharset.Concat(lowercaseCharset);
+		var numberCharset = Enumerable.Range(48, 57 - 48 + 1);
+		var specialCharset = Enumerable.Range(33, 47 - 33 + 1).Concat(Enumerable.Range(58, 7))
+			.Concat(Enumerable.Range(91, 6)).Concat(Enumerable.Range(123, 4));
+
+		var charset = charsetOption switch
+		{
+			// letters and numbers
+			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers => 
+				letterCharset.Concat(numberCharset).ToArray(),
+			// letters and special characters
+			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.SpecialCharacters => 
+				letterCharset.Concat(specialCharset).ToArray(),
+			// letters, numbers and special characters
+			StringOptions.LowercaseLetters | StringOptions.UppercaseLetters | StringOptions.Numbers | StringOptions.SpecialCharacters =>
+				letterCharset.Concat(numberCharset).Concat(specialCharset).ToArray(),
+			_ => letterCharset.ToArray()
+		};
+
+		// check the length provided in CLI
 		if (length < 0)
 		{
 			Console.Error.WriteLine("Length cannot be negative");
 			Environment.Exit(1);
 		}
 
-		Console.WriteLine(GetString(length, noSpecialChars, noNumbers));
+		Console.WriteLine(GetString(length, charset));
 	}
 
-	private static string GetString(int length, bool noSpecialChars, bool noNumbers)
+	private static string GetString(int length, int[] charset)
 	{
 		StringBuilder stringBuilder = new(length);
 		Random random = new();
 
-		int[] charSet;
-
-		if (noSpecialChars && noNumbers)
-			charSet = CHARS_ASCII_NO_NUMBERS_NO_SPECIAL;
-		else if (noSpecialChars)
-			charSet = CHARS_ASCII_NO_SPECIAL;
-		else if (noNumbers)
-			charSet = CHARS_ASCII_NO_NUMBERS;
-		else
-			charSet = CHARS_ASCII;
-
 		for (var i = 0; i < length; i++)
 		{
-			var index = random.Next(charSet.Length);
-			stringBuilder.Append((char)charSet[index]);
+			var index = random.Next(charset.Length);
+			stringBuilder.Append((char)charset[index]);
 		}
 
 		return stringBuilder.ToString();
