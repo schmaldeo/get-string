@@ -16,7 +16,7 @@ public static class Program
 
 	public static int Main(string[] args)
 	{
-		var rootCommand = new RootCommand("An app returning a 4-bit ASCII string of given length.");
+		var rootCommand = new RootCommand("An app returning a 7-bit ASCII string of given length.");
 
 		var lengthArgument = new Argument<int>("length", "Length of the string.");
 		var specialCharsOption = new Option<bool>("--no-special-chars", "Returns a string without special characters.");
