@@ -66,7 +66,7 @@ public static class Program
 		                    (!noSpecialChars ? StringOptions.SpecialCharacters : 0) |
 		                    (!noNumbers ? StringOptions.Numbers : 0);
 
-		// create a bunch of IEnumerables containing 4 bit ASCII codes
+		// create a bunch of IEnumerables containing 7-bit ASCII codes
 		var uppercaseCharset = Enumerable.Range(65, 90 - 65 + 1);
 		var lowercaseCharset = Enumerable.Range(97, 122 - 97 + 1);
 		var letterCharset = uppercaseCharset.Concat(lowercaseCharset);
